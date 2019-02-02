@@ -257,9 +257,13 @@ public class AndroidInappPurchasePlugin implements MethodCallHandler {
             JSONObject json = new JSONObject(data);
             JSONObject item = new JSONObject();
             item.put("productId", json.getString("productId"));
-            item.put("transactionId", json.getString("orderId"));
+            if (json.has("orderId")) {
+              item.put("transactionId", json.getString("orderId"));
+            }
             item.put("transactionDate", json.getString("purchaseTime"));
-            item.put("transactionReceipt", json.getString("purchaseToken"));
+            if (json.has("originalJson")) {
+              item.put("transactionReceipt", json.getString("originalJson"));
+            }
             item.put("dataAndroid", data);
             item.put("signatureAndroid", signature);
             item.put("purchaseToken", json.getString("purchaseToken"));
@@ -308,7 +312,7 @@ public class AndroidInappPurchasePlugin implements MethodCallHandler {
                 item.put("productId", purchase.getSku());
                 item.put("transactionId", purchase.getOrderId());
                 item.put("transactionDate", String.valueOf(purchase.getPurchaseTime()));
-                item.put("transactionReceipt", purchase.getPurchaseToken());
+                item.put("transactionReceipt", purchase.getOriginalJson());
                 item.put("purchaseToken", purchase.getPurchaseToken());
                 item.put("dataAndroid", purchase.getOriginalJson());
                 item.put("signatureAndroid", purchase.getSignature());
@@ -410,7 +414,7 @@ public class AndroidInappPurchasePlugin implements MethodCallHandler {
           item.put("productId", purchase.getSku());
           item.put("transactionId", purchase.getOrderId());
           item.put("transactionDate", String.valueOf(purchase.getPurchaseTime()));
-          item.put("transactionReceipt", purchase.getPurchaseToken());
+          item.put("transactionReceipt", purchase.getOriginalJson());
           item.put("purchaseToken", purchase.getPurchaseToken());
           item.put("dataAndroid", purchase.getOriginalJson());
           item.put("signatureAndroid", purchase.getSignature());

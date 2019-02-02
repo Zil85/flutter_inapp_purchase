@@ -32,7 +32,7 @@ For help on editing plugin code, view the [documentation](https://flutter.io/dev
 | getAppStoreInitiatedProducts | | `List<IAPItem>` | If the user has initiated a purchase directly on the App Store, the products that the user is attempting to purchase will be returned here. (iOS only) Note: On iOS versions earlier than 11.0 this method will always return an empty list, as the functionality was introduced in v11.0. [See Apple Docs for more info](https://developer.apple.com/documentation/storekit/skpaymenttransactionobserver/2877502-paymentqueue) Always returns an empty list on Android.
 | buySubscription | `string` Subscription ID/sku, `string` Old Subscription ID/sku (on Android) | `PurchasedItem` | Create (buy) a subscription to a sku. For upgrading/downgrading subscription on Android pass second parameter with current subscription ID, on iOS this is handled automatically by store. |
 | buyProduct | `string` Product ID/sku | `PurchasedItem` | Buy a product |
-| buyProductWithoutFinishTransaction | `string` Product ID/sku | `PurchasedItem` | Buy a product without finish transaction call (iOS only) |
+| ~~buyProductWithoutFinishTransaction~~ | `string` Product ID/sku | `PurchasedItem` | Buy a product without finish transaction call (iOS only) |
 | finishTransaction | `void` | `String` | Send finishTransaction call to Apple IAP server. Call this function after receipt validation process |
 | consumePurchase | `String` Purchase token | `String` | Consume a product (on Android.) No-op on iOS. |
 | endConnection | | `String` | End billing connection (on Android.) No-op on iOS. |
@@ -71,8 +71,8 @@ For help on editing plugin code, view the [documentation](https://flutter.io/dev
   final String transactionId;
   final String productId;
   final String transactionReceipt;
-  final String purchaseToken;
   // Android only
+  final String purchaseToken;
   final bool autoRenewingAndroid;
   final String dataAndroid;
   final String signatureAndroid;
@@ -393,6 +393,43 @@ class _MyAppState extends State<MyApp> {
   }
 }
 ```
+
+## ProGuard
+If you have eneabled proguard you will need to add the following rules to your `proguard-rules.pro`
+
+```
+#In app Purchase
+-keep class com.amazon.** {*;}
+-keep class com.dooboolab.** { *; }
+-keep class com.android.vending.billing.**
+-dontwarn com.amazon.**
+-keepattributes *Annotation*
+```
+
+## Q & A
+
+#### Can I buy product right away skipping fetching products if I already know productId?
+- You can in `Android` but not in `ios`. In `ios` you should always `fetchProducts` first. You can see more info [here](https://medium.com/ios-development-tips-and-tricks/working-with-ios-in-app-purchases-e4b55491479b).
+
+#### How do I validate receipt in ios?
+- Official doc is [here](https://developer.apple.com/library/archive/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateRemotely.html).
+
+#### How do I validate receipt in android?
+- Offical doc is [here](https://developer.android.com/google/play/billing/billing_library_overview).
+- I've developed this feature for other developers to contribute easily who are aware of these things. The doc says you can also get the `accessToken` via play console without any of your backend server. You can get this by following process.
+  * Select your app > Services & APIs > "YOUR LICENSE KEY FOR THIS APPLICATION Base64-encoded RSA public key to include in your binary". [reference](https://stackoverflow.com/questions/27132443/how-to-find-my-google-play-services-android-base64-public-key).
+
+#### Invalid productId in ios.
+- Please try below and make sure you've done belows.
+  - Steps
+    1. Completed an effective "Agreements, Tax, and Banking."
+    2. Setup sandbox testing account in "Users and Roles."
+    3. Signed into iOS device with sandbox account.
+    3. Set up three In-App Purchases with the following status:
+       i. Ready to Submit
+       ii. Missing Metadata
+       iii. Waiting for Review
+    4. Enable "In-App Purchase" in Xcode "Capabilities" and in Apple Developer -> "App ID" setting. Delete app / Restart device / Quit "store" related processes in Activity Monitor / Xcode Development Provisioning Profile -> Clean -> Build.
 
 ## Help Maintenance
 I've been maintaining quite many repos these days and burning out slowly. If you could help me cheer up, buying me a cup of coffee will make my life really happy and get much energy out of it.

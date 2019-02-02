@@ -227,6 +227,22 @@
       currencyCode = product.priceLocale.currencyCode;
     }
 
+    NSDictionary *obj = [NSDictionary dictionaryWithObjectsAndKeys:
+        product.productIdentifier, @"productId",
+        [product.price stringValue], @"price",
+        currencyCode, @"currency",
+        product.localizedTitle ? product.localizedTitle : @"", @"title",
+        product.localizedDescription ? product.localizedDescription : @"", @"description",
+        localizedPrice, @"localizedPrice",
+        periodNumberIOS, @"subscriptionPeriodNumberIOS",
+        periodUnitIOS, @"subscriptionPeriodUnitIOS",
+        introductoryPrice, @"introductoryPrice",
+        introductoryPricePaymentMode, @"introductoryPricePaymentModeIOS",
+        introductoryPriceNumberOfPeriods, @"introductoryPriceNumberOfPeriodsIOS",
+        introductoryPriceSubscriptionPeriod, @"introductoryPriceSubscriptionPeriodIOS",
+        nil
+    ];
+/*
     NSDictionary* obj = @{
       @"productId" : product.productIdentifier,
       @"price" : [product.price stringValue],
@@ -242,6 +258,7 @@
       @"introductoryPriceNumberOfPeriodsIOS" : introductoryPriceNumberOfPeriods,
       @"introductoryPriceSubscriptionPeriodIOS" : introductoryPriceSubscriptionPeriod
     };
+*/
     return obj;
 }
 
@@ -311,6 +328,9 @@
         [requestedPayments removeObjectForKey:transaction.payment];
     }
     [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+
+    // additionally send event
+    [self.channel invokeMethod:@"iap-purchase-event" arguments: purchase];
 }
 
 - (NSDictionary *)getPurchaseData:(SKPaymentTransaction *)transaction {
@@ -323,12 +343,23 @@
 
     if (receiptData == nil) return nil;
 
+    NSMutableDictionary *purchase = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+        @(transaction.transactionDate.timeIntervalSince1970 * 1000), @"transactionDate",
+        transaction.transactionIdentifier, @"transactionId",
+        transaction.payment.productIdentifier, @"productId",
+        [receiptData base64EncodedStringWithOptions:0], @"transactionReceipt",
+        nil
+    ];
+
+/*
     NSMutableDictionary *purchase = [NSMutableDictionary dictionaryWithDictionary: @{
                                                                                      @"transactionDate": @(transaction.transactionDate.timeIntervalSince1970 * 1000),
                                                                                      @"transactionId": transaction.transactionIdentifier,
                                                                                      @"productId": transaction.payment.productIdentifier,
                                                                                      @"transactionReceipt":[receiptData base64EncodedStringWithOptions:0]
                                                                                      }];
+*/
+
     // originalTransaction is available for restore purchase and purchase of cancelled/expired subscriptions
     SKPaymentTransaction *originalTransaction = transaction.originalTransaction;
     if (originalTransaction) {
